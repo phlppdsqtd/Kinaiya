@@ -39,7 +39,7 @@ public class WeatherManager : MonoBehaviour
     public void GenerateDailyForecast()
     {
         todayRainChance = Random.Range(0f, 100f);
-        Debug.Log($"[WeatherManager] New Day! Today's chance of rain is: {todayRainChance:F1}%");
+        //Debug.Log($"[WeatherManager] New Day! Today's chance of rain is: {todayRainChance:F1}%");
     }
 
     private IEnumerator WeatherCheckLoop()
@@ -54,18 +54,18 @@ public class WeatherManager : MonoBehaviour
                 float roll = Random.Range(0f, 100f);
                 
                 // 2. Announce the check and the rolled number
-                Debug.Log($"[WeatherManager] Checking weather... Rolled {roll:F1} (Needs {todayRainChance:F1} or lower to rain).");
+                //Debug.Log($"[WeatherManager] Checking weather... Rolled {roll:F1} (Needs {todayRainChance:F1} or lower to rain).");
 
                 // 3. Check for pass/fail
                 if (roll <= todayRainChance || forceRainOnStart)
                 {
-                    Debug.Log("<color=green>[WeatherManager] Check PASS! A storm is starting.</color>");
+                    //Debug.Log("<color=green>[WeatherManager] Check PASS! A storm is starting.</color>");
                     float duration = Random.Range(minRainDuration, maxRainDuration);
                     StartCoroutine(StartRainRoutine(duration));
                 }
                 else
                 {
-                    Debug.Log("<color=yellow>[WeatherManager] Check FAIL. It stays sunny.</color>");
+                    //Debug.Log("<color=yellow>[WeatherManager] Check FAIL. It stays sunny.</color>");
                 }
             }
         }
@@ -77,7 +77,7 @@ public class WeatherManager : MonoBehaviour
         if (rainParticles != null) rainParticles.Play();
 
         // Prints when it starts raining and how long it will last
-        Debug.Log($"[WeatherManager] It is raining! Rain will last for {duration:F1} seconds.");
+        //Debug.Log($"[WeatherManager] It is raining! Rain will last for {duration:F1} seconds.");
 
         yield return new WaitForSeconds(duration);
 
@@ -85,6 +85,6 @@ public class WeatherManager : MonoBehaviour
         isRaining = false;
 
         // Prints when the rain stops
-        Debug.Log("[WeatherManager] The rain has stopped.");
+        //Debug.Log("[WeatherManager] The rain has stopped.");
     }
 }

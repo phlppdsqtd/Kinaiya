@@ -4,26 +4,23 @@ using System.Collections.Generic;
 public class PenDirtSpawner : MonoBehaviour
 {
     [Header("Spawn Settings")]
-    [Tooltip("Minimum dirt piles per day.")]
     public int minDirtPerDay = 3; 
-    [Tooltip("Maximum dirt piles per day.")]
     public int maxDirtPerDay = 5;
     
     [Header("References")]
     public GameObject[] dirtPrefabs;
     public Transform[] spawnPoints;
 
+    private List<GameObject> spawnedDirtList = new List<GameObject>();
+
     void Start()
     {
-        // Spawns dirt for the very first day when the game initially loads
         SpawnDailyDirt(); 
     }
 
     public void SpawnDailyDirt()
     {
-        // Pick a random amount of dirt for today (max is exclusive, so +1 is needed)
         int dirtToSpawn = Random.Range(minDirtPerDay, maxDirtPerDay + 1);
-
         List<Transform> availablePoints = new List<Transform>(spawnPoints);
         int numToSpawn = Mathf.Min(dirtToSpawn, availablePoints.Count);
 
@@ -38,9 +35,21 @@ public class PenDirtSpawner : MonoBehaviour
             float randomRotationY = Random.Range(0f, 360f);
             Quaternion randomRotation = Quaternion.Euler(0, randomRotationY, 0);
 
-            Instantiate(chosenPrefab, chosenPoint.position, randomRotation);
+            GameObject spawnedDirt = Instantiate(chosenPrefab, chosenPoint.position, randomRotation);
+            spawnedDirtList.Add(spawnedDirt);
 
             availablePoints.RemoveAt(randomPointIndex);
         }
+    }
+
+    // Helper method to check if this pen still contains uncleaned dirt
+    public bool HasActiveDirt()
+    {
+        spawnedDirtList.RemoveAll(item => item == null);
+        foreach (GameObject dirt in spawnedDirtList)
+        {
+            if (dirt.activeSelf) return true;
+        }
+        return false;
     }
 }
