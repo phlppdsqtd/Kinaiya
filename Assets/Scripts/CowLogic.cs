@@ -17,6 +17,8 @@ public class CowLogic : MonoBehaviour
     [SerializeField] private float thirstThreshold = 75f;
     [SerializeField] private float thirstDepletionRate = 0.8f;
     [SerializeField] private float drinkDuration = 3f;
+    [SerializeField] private float thirstReplenishAmount = 40f; 
+    [SerializeField] private float troughDepletionAmount = 25f; 
 
     [Header("Cow Health Stats")]
     [SerializeField] private float maxHealth = 100f;
@@ -102,7 +104,8 @@ public class CowLogic : MonoBehaviour
 
     public void ConsumeWater(WaterTrough trough)
     {
-        if (IsDrinking || trough == null || !trough.HasWater) return;
+        // ADDED !IsThirsty check so the cow refuses to drink if already satisfied
+        if (IsDrinking || trough == null || !trough.HasWater || !IsThirsty) return;
         StartCoroutine(DrinkWaterRoutine(trough));
     }
 
@@ -110,7 +113,8 @@ public class CowLogic : MonoBehaviour
     {
         IsDrinking = true;
 
-        if (trough.TryDrinkWater(25f)) 
+        // Uses serialized variable
+        if (trough.TryDrinkWater(troughDepletionAmount)) 
         {
             float elapsedTime = 0f;
             while (elapsedTime < drinkDuration)
@@ -119,7 +123,8 @@ public class CowLogic : MonoBehaviour
                 yield return null;
             }
 
-            currentThirst += 40f; 
+            // Uses serialized variable
+            currentThirst += thirstReplenishAmount; 
             currentThirst = Mathf.Clamp(currentThirst, 0, maxThirst);
             if (mooSound != null) mooSound.Play(); 
         }

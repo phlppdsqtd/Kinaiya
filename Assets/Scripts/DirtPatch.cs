@@ -6,6 +6,8 @@ public class DirtPatch : MonoBehaviour
     public float dirtHealth = 100f;
     [Tooltip("How fast the dirt fades while sweeping.")]
     public float cleanSpeed = 40f;
+    [Tooltip("Minimum brush speed required to clean.")]
+    public float requiredScrubSpeed = 0.5f; 
     [Tooltip("Drag your floating dirty icon here.")]
     public GameObject dirtyIcon; 
 
@@ -34,6 +36,13 @@ public class DirtPatch : MonoBehaviour
     {
         if (other.CompareTag("Brush"))
         {
+            // Check if the brush is actually moving fast enough to count as scrubbing
+            Rigidbody brushRb = other.GetComponentInParent<Rigidbody>();
+            if (brushRb != null && brushRb.linearVelocity.magnitude < requiredScrubSpeed)
+            {
+                return; // Brush is moving too slowly, ignore
+            }
+
             dirtHealth -= cleanSpeed * Time.deltaTime;
             float alphaRatio = dirtHealth / 100f;
             

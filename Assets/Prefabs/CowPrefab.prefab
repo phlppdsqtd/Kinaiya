@@ -443,7 +443,7 @@ Transform:
   m_GameObject: {fileID: 4607927767417297398}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.8, z: 1.5}
+  m_LocalPosition: {x: 0, y: 0.7, z: 1.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -468,7 +468,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.6
+  m_Radius: 0.7
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &6815972217428921405
 MonoBehaviour:
@@ -1241,7 +1241,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 8831260829513899865}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.8
+  m_Radius: 0.4
   m_Speed: 1
   m_Acceleration: 8
   avoidancePriority: 50
@@ -1298,10 +1298,12 @@ MonoBehaviour:
   hungerDepletionRate: 0.2
   eatDuration: 3
   maxThirst: 100
-  currentThirst: 50
-  thirstThreshold: 70
-  thirstDepletionRate: 0.3
+  currentThirst: 55
+  thirstThreshold: 50
+  thirstDepletionRate: 0.1
   drinkDuration: 3
+  thirstReplenishAmount: 40
+  troughDepletionAmount: 25
   maxHealth: 100
   currentHealth: 70
   healthDepletionRate: 0.3

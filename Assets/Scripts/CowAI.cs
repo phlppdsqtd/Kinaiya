@@ -78,30 +78,6 @@ public class CowAI : MonoBehaviour
                 agent.isStopped = false;
         }
 
-        // Arrival Logic: Check if we reached our target and should consume it
-        if (currentTarget != null && !HasPlayerPressure && herdLeader == null)
-        {
-            float distToWalkTarget = Vector3.Distance(transform.position, currentWalkTarget);
-            
-            // If the agent has arrived near the final path point
-            if (distToWalkTarget <= agent.stoppingDistance + 1f)
-            {
-                WaterTrough trough = currentTarget.GetComponent<WaterTrough>();
-                if (trough != null && cowLogic.IsThirsty)
-                {
-                    cowLogic.ConsumeWater(trough);
-                    currentTarget = null; // Clear target after interacting
-                }
-                
-                FeedItem food = currentTarget.GetComponent<FeedItem>();
-                if (food != null && cowLogic.IsHungry)
-                {
-                    cowLogic.ConsumeFood(food);
-                    currentTarget = null; // Clear target after interacting
-                }
-            }
-        }
-
         if (!HasPlayerPressure && cowRearTimer <= 0)
         {
             agent.updateRotation = true;
@@ -204,7 +180,13 @@ public class CowAI : MonoBehaviour
 
             if (herdLeader == null && cowLogic != null)
             {
-                // Only search for a new target if we don't already have one
+                // ADD THIS BLOCK: Clear the trough target if the cow is no longer thirsty
+                if (currentTarget != null && !cowLogic.IsThirsty && currentTarget.GetComponent<WaterTrough>() != null)
+                {
+                    currentTarget = null;
+                }
+                
+                // Only search for a new target if we don't already have one, or if our target was eaten
                 if (currentTarget == null) 
                 {
                     if (cowLogic.IsThirsty)
