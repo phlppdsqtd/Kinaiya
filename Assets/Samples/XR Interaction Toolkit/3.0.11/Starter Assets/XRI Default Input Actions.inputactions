@@ -3333,6 +3333,74 @@
                     "isPartOfComposite": true
                 }
             ]
+        },
+        {
+            "name": "Custom UI",
+            "id": "889c18de-ec82-44dc-bd18-388d9d660903",
+            "actions": [
+                {
+                    "name": "Pause",
+                    "type": "Button",
+                    "id": "907ceb92-6007-49c0-a9b9-42517e771e7d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "TaskList",
+                    "type": "Button",
+                    "id": "b42df640-2903-4dda-8211-906805b43fc8",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Notebook",
+                    "type": "Button",
+                    "id": "3292e1d2-5fd0-411e-aa19-6c5be2e5aab2",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "c26cb2df-ff03-4496-a91a-0e897914b419",
+                    "path": "<XRController>{LeftHand}/secondaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4c116129-fe5b-4bcb-acd3-877cb1269c86",
+                    "path": "<XRController>{RightHand}/secondaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TaskList",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0db94ef3-bf79-458e-a04c-f67521802c8b",
+                    "path": "<XRController>{RightHand}/primaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Notebook",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []

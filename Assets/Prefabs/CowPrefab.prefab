@@ -142,8 +142,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190335
-  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -160,15 +160,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 48
-  m_fontSizeBase: 48
+  m_fontSize: 42
+  m_fontSizeBase: 42
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -393,7 +393,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4372546694255957966}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -1029,7 +1029,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 862250419370276350, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
       propertyPath: 'm_BlendShapeWeights.Array.data[0]'
-      value: 100
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 862250419370276350, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
+      propertyPath: 'm_BlendShapeWeights.Array.data[1]'
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
       propertyPath: m_Name
@@ -1198,6 +1202,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6668722102435358205}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 772366491989406568}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7907165900012168257}
   m_SourcePrefab: {fileID: 100100000, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
 --- !u!4 &8197994171773945315 stripped
 Transform:
@@ -1229,9 +1239,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
-  m_Height: 2.5
+  m_Height: 2.6
   m_Direction: 2
-  m_Center: {x: 0, y: 1, z: 0.32}
+  m_Center: {x: 0, y: 1, z: 0.3}
 --- !u!195 &845354073104928748
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1241,7 +1251,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 8831260829513899865}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.4
+  m_Radius: 0.39
   m_Speed: 1
   m_Acceleration: 8
   avoidancePriority: 50
@@ -1278,8 +1288,12 @@ MonoBehaviour:
   herdingSpeed: 1.8
   reverseSpeed: 1
   angularSpeed: 120
+  frontReactionDistance: 1.8
+  leftReactionDistance: 1
+  rightReactionDistance: 1
   herdFollowRadius: 15
   herdFollowSpeed: 1.5
+  player: {fileID: 0}
 --- !u!114 &2381934733418748135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1294,20 +1308,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHunger: 100
   currentHunger: 80
-  hungerThreshold: 80
+  hungerThreshold: 75
   hungerDepletionRate: 0.2
   eatDuration: 3
   maxThirst: 100
-  currentThirst: 55
+  currentThirst: 75
   thirstThreshold: 50
   thirstDepletionRate: 0.1
   drinkDuration: 3
   thirstReplenishAmount: 40
   troughDepletionAmount: 25
   maxHealth: 100
-  currentHealth: 70
+  currentHealth: 100
   healthDepletionRate: 0.3
   healthRecoveryRate: 0.2
+  weightController: {fileID: 7907165900012168257}
+  malnourishedThreshold: 50
+  healthyBloatValue: 30
+  diseaseBloatValue: 60
+  hasBloatDisease: 0
   munchParticles: {fileID: 0}
   mooSound: {fileID: 0}
 --- !u!114 &1930213130487055868
@@ -1433,3 +1452,44 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!95 &772366491989406568
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8831260829513899865}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 00c88efedb2d415459c141f9efa28ca7, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7907165900012168257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8831260829513899865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4625f1f3ffcd1e14a81071b1340c77db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cowMesh: {fileID: 9059216114496395254}
+  bloatValue: 30
+--- !u!137 &9059216114496395254 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 862250419370276350, guid: 80296a2904e48ea478c6b8bb75ed629d, type: 3}
+  m_PrefabInstance: {fileID: 8525201114724983304}
+  m_PrefabAsset: {fileID: 0}

@@ -24,6 +24,11 @@ public class CowAI : MonoBehaviour
     [SerializeField] private float herdingSpeed = 1.8f; 
     [SerializeField] private float reverseSpeed = 1.0f;
     [SerializeField] private float angularSpeed = 120f; 
+
+    [Header("Reaction Distances")]
+    [SerializeField] private float frontReactionDistance = 1.8f; // Longer for the neck/head
+    [SerializeField] private float leftReactionDistance = 1f;  // Shorter for the ribs
+    [SerializeField] private float rightReactionDistance = 1f; // Shorter for the ribs
     
     [Header("Herd Mentality Settings")]
     [SerializeField] private float herdFollowRadius = 15f;
@@ -41,11 +46,20 @@ public class CowAI : MonoBehaviour
     private float cowRearTimer; 
     private Vector3 lastPlayerPos;
 
+    private float reactionCooldownTimer = 0f;
+    private float reactionPauseTimer = 0f;
+
     public bool HasPlayerPressure { get; private set; }
     public bool IsMovingForward { get; private set; } 
+    public Transform player;
 
     void Start()
     {
+        // Find the player automatically using the Main Camera (which is on your XR Rig)
+        if (player == null && Camera.main != null)
+        {
+            player = Camera.main.transform;
+        }
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>(); 
         if (cowLogic == null) cowLogic = GetComponent<CowLogic>();
@@ -57,41 +71,118 @@ public class CowAI : MonoBehaviour
     }
 
     void Update()
-    {
-        UpdatePressureTimers();
-        ProcessHerding();
-
-        // Handle Eating/Drinking State
-        if (cowLogic != null && (cowLogic.IsEating || cowLogic.IsDrinking))
         {
-            if (agent.isActiveAndEnabled && !agent.isStopped) 
+            UpdateTimers();
+
+            // --- 1. CHECK REACTION DISTANCE FIRST ---
+            if (player != null && reactionCooldownTimer <= 0)
             {
-                agent.isStopped = true;
-                agent.velocity = Vector3.zero;
+                // Flatten the Y-axis so VR headset height doesn't break the distance math
+                Vector3 flatPlayerPos = player.position;
+                flatPlayerPos.y = transform.position.y;
+                
+                float distanceToPlayer = Vector3.Distance(transform.position, flatPlayerPos);
+                
+                // Convert flat player position to the cow's local space to determine direction FIRST
+                Vector3 localPlayerPos = transform.InverseTransformPoint(flatPlayerPos);
+
+                bool triggerAnimation = false;
+                FlightZoneType reactionZone = FlightZoneType.Front;
+
+                // Check WHICH side the player is on, then apply the specific distance threshold
+                if (localPlayerPos.z > 0 && Mathf.Abs(localPlayerPos.x) < localPlayerPos.z)
+                {
+                    if (distanceToPlayer <= frontReactionDistance)
+                    {
+                        triggerAnimation = true;
+                        reactionZone = FlightZoneType.Front;
+                    }
+                }
+                else if (localPlayerPos.x < 0)
+                {
+                    if (distanceToPlayer <= leftReactionDistance)
+                    {
+                        triggerAnimation = true;
+                        reactionZone = FlightZoneType.Left;
+                    }
+                }
+                else
+                {
+                    if (distanceToPlayer <= rightReactionDistance)
+                    {
+                        triggerAnimation = true;
+                        reactionZone = FlightZoneType.Right;
+                    }
+                }
+
+                // If any of the specific distance thresholds were met, execute the reaction
+                if (triggerAnimation)
+                {
+                    // Stop movement immediately
+                    if (agent.isActiveAndEnabled)
+                    {
+                        agent.isStopped = true;
+                        agent.velocity = Vector3.zero;
+                    }
+                    
+                    TriggerReaction(reactionZone);
+                    UpdateAnimator(); // Force animator to register 0 speed before exiting
+                    return; // EXIT EARLY: Completely ignore herding this frame
+                }
             }
+
+            // --- 2. CHECK ONGOING STATES ---
+            bool isConsuming = cowLogic != null && (cowLogic.IsEating || cowLogic.IsDrinking);
+            bool isReacting = reactionPauseTimer > 0f;
+
+            // Handle Eating, Drinking, or Reacting State
+            if (isConsuming || isReacting)
+            {
+                if (agent.isActiveAndEnabled && !agent.isStopped) 
+                {
+                    agent.isStopped = true;
+                    agent.velocity = Vector3.zero;
+                }
+                UpdateAnimator();
+                return; // EXIT EARLY: Do not process herding while busy
+            }
+            else
+            {
+                if (agent.isActiveAndEnabled && agent.isStopped) 
+                    agent.isStopped = false;
+            }
+
+            // --- 3. PROCESS HERDING ---
+            // This now ONLY runs if the player is safely outside the reaction distance 
+            // and the cow is not currently eating or frozen in a reaction pause.
+            ProcessHerding();
+
+            // --- 4. PROCESS WANDERING / SURVIVAL ---
+            if (!HasPlayerPressure && cowRearTimer <= 0)
+            {
+                agent.updateRotation = true;
+                ProcessSurvivalAI();
+            }
+
             UpdateAnimator();
-            return;
         }
-        else
-        {
-            if (agent.isActiveAndEnabled && agent.isStopped) 
-                agent.isStopped = false;
-        }
-
-        if (!HasPlayerPressure && cowRearTimer <= 0)
-        {
-            agent.updateRotation = true;
-            ProcessSurvivalAI();
-        }
-
-        UpdateAnimator();
-    }
 
     public void ApplyContinuousPressure(FlightZoneType zone, Vector3 pusherPosition, bool isPlayer)
     {
         if (isPlayer)
         {
             lastPlayerPos = pusherPosition;
+            
+            /*
+            float distanceToPlayer = Vector3.Distance(transform.position, pusherPosition);
+
+            // Trigger close-proximity animations
+            if (distanceToPlayer <= reactionDistance && reactionCooldownTimer <= 0f)
+            {
+                TriggerReaction(zone);
+            }
+            */
+
             switch (zone)
             {
                 case FlightZoneType.Front: frontPlayerTimer = pressureBuffer; break;
@@ -107,13 +198,40 @@ public class CowAI : MonoBehaviour
         }
     }
 
-    private void UpdatePressureTimers()
+    private void TriggerReaction(FlightZoneType zone)
     {
-        frontPlayerTimer -= Time.deltaTime;
-        rearPlayerTimer -= Time.deltaTime;
-        leftPlayerTimer -= Time.deltaTime;
-        rightPlayerTimer -= Time.deltaTime;
-        cowRearTimer -= Time.deltaTime;
+        if (animator == null) return;
+
+        reactionCooldownTimer = 3.0f; // Prevent spamming
+
+        switch (zone)
+        {
+            case FlightZoneType.Front: 
+                animator.SetTrigger("HeadShake"); 
+                reactionPauseTimer = 1.5f; // Matches 1.5s HeadShake
+                break;
+            case FlightZoneType.Left: 
+                animator.SetTrigger("LeftKick"); 
+                reactionPauseTimer = 1.0f; // Matches 1.0s Kick
+                break;
+            case FlightZoneType.Right: 
+                animator.SetTrigger("RightKick"); 
+                reactionPauseTimer = 1.0f; // Matches 1.0s Kick
+                break;
+        }
+    }
+
+    private void UpdateTimers()
+    {
+        float dt = Time.deltaTime;
+        frontPlayerTimer -= dt;
+        rearPlayerTimer -= dt;
+        leftPlayerTimer -= dt;
+        rightPlayerTimer -= dt;
+        cowRearTimer -= dt;
+        
+        if (reactionCooldownTimer > 0) reactionCooldownTimer -= dt;
+        if (reactionPauseTimer > 0) reactionPauseTimer -= dt;
     }
 
     private void ProcessHerding()
@@ -180,24 +298,15 @@ public class CowAI : MonoBehaviour
 
             if (herdLeader == null && cowLogic != null)
             {
-                // ADD THIS BLOCK: Clear the trough target if the cow is no longer thirsty
                 if (currentTarget != null && !cowLogic.IsThirsty && currentTarget.GetComponent<WaterTrough>() != null)
                 {
                     currentTarget = null;
                 }
                 
-                // Only search for a new target if we don't already have one, or if our target was eaten
                 if (currentTarget == null) 
                 {
-                    if (cowLogic.IsThirsty)
-                    {
-                        FindNearestTrough();
-                    }
-                    
-                    if (currentTarget == null && cowLogic.IsHungry)
-                    {
-                        FindNearestFood();
-                    }
+                    if (cowLogic.IsThirsty) FindNearestTrough();
+                    if (currentTarget == null && cowLogic.IsHungry) FindNearestFood();
                 }
             }
             else if (herdLeader == null)
@@ -361,8 +470,18 @@ public class CowAI : MonoBehaviour
         {
             float speed = agent.velocity.magnitude;
             animator.SetFloat("Speed", speed);
+            
             bool isGrazing = speed < 0.1f && currentTarget == null && herdLeader == null && !HasPlayerPressure;
             animator.SetBool("IsGrazing", isGrazing);
+            
+            animator.SetBool("IsMovingForward", IsMovingForward);
+            
+            if (cowLogic != null)
+            {
+                animator.SetBool("IsConsuming", cowLogic.IsEating || cowLogic.IsDrinking);
+                animator.SetBool("IsSick", cowLogic.IsSick); 
+                animator.SetBool("IsLyingDown", cowLogic.IsLyingDown); 
+            }
         }
     }
 }

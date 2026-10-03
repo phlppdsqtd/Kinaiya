@@ -26,11 +26,22 @@ public class CowLogic : MonoBehaviour
     [SerializeField] private float healthDepletionRate = 1f;
     [SerializeField] private float healthRecoveryRate = 0.2f;
 
+    [Header("Weight & Bloat System")]
+    [SerializeField] private CowWeightController weightController;
+    [SerializeField] private float malnourishedThreshold = 50f; // Hunger below this means 0 bloat
+    [SerializeField] private float healthyBloatValue = 30f;     // Bloat value when hunger is at max
+    [SerializeField] private float diseaseBloatValue = 100f;    // Fixed bloat when sick with bloat disease
+    public bool hasBloatDisease = false; // Placeholder to trigger disease bloat
+
     [Header("Effects")]
     [SerializeField] private ParticleSystem munchParticles;
     [SerializeField] private AudioSource mooSound;
 
     private bool isInDirtyPen = false;
+
+    // Disease Placeholders for Animation Logic
+    public bool IsSick { get; private set; } = false;
+    public bool IsLyingDown { get; private set; } = false;
 
     public float CurrentHunger => currentHunger;
     public float MaxHunger => maxHunger;
@@ -48,6 +59,7 @@ public class CowLogic : MonoBehaviour
 
     void Update()
     {
+        // Stat depletion
         currentHunger -= hungerDepletionRate * Time.deltaTime;
         currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
 
@@ -60,13 +72,44 @@ public class CowLogic : MonoBehaviour
             currentHealth += healthRecoveryRate * Time.deltaTime;
             
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        // Update visuals based on new stats
+        UpdateWeightVisuals();
+    }
+
+    private void UpdateWeightVisuals()
+    {
+        if (weightController == null) return;
+
+        // 1. Check for disease override first
+        if (hasBloatDisease)
+        {
+            weightController.SetWeight(diseaseBloatValue);
+            return;
+        }
+
+        // 2. Check for malnourishment
+        if (currentHunger <= malnourishedThreshold)
+        {
+            weightController.SetWeight(0f);
+        }
+        else
+        {
+            // 3. Interpolate between 0 and healthyBloatValue based on current hunger
+            float hungerRatio = (currentHunger - malnourishedThreshold) / (maxHunger - malnourishedThreshold);
+            float targetBloat = Mathf.Lerp(0f, healthyBloatValue, hungerRatio);
+            weightController.SetWeight(targetBloat);
+        }
     }
 
     public void SetInDirtyPen(bool state) => isInDirtyPen = state;
 
+    public void SetSickState(bool state) => IsSick = state;
+    public void SetLyingDownState(bool state) => IsLyingDown = state;
+
     public void ConsumeFood(FeedItem food)
     {
-        if (food.isBeingEaten) return;
+        if (IsEating || food == null || food.isBeingEaten || !IsHungry) return;
         food.isBeingEaten = true;
         StartCoroutine(EatFoodRoutine(food));
     }
@@ -95,7 +138,6 @@ public class CowLogic : MonoBehaviour
             currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
             if (mooSound != null) mooSound.Play();
 
-            // Safely detach from XR interactor hierarchy before destroying to prevent Assertion failure
             food.transform.SetParent(null);
             Destroy(food.gameObject);
         }
@@ -104,7 +146,6 @@ public class CowLogic : MonoBehaviour
 
     public void ConsumeWater(WaterTrough trough)
     {
-        // ADDED !IsThirsty check so the cow refuses to drink if already satisfied
         if (IsDrinking || trough == null || !trough.HasWater || !IsThirsty) return;
         StartCoroutine(DrinkWaterRoutine(trough));
     }
@@ -113,7 +154,6 @@ public class CowLogic : MonoBehaviour
     {
         IsDrinking = true;
 
-        // Uses serialized variable
         if (trough.TryDrinkWater(troughDepletionAmount)) 
         {
             float elapsedTime = 0f;
@@ -123,7 +163,6 @@ public class CowLogic : MonoBehaviour
                 yield return null;
             }
 
-            // Uses serialized variable
             currentThirst += thirstReplenishAmount; 
             currentThirst = Mathf.Clamp(currentThirst, 0, maxThirst);
             if (mooSound != null) mooSound.Play(); 
